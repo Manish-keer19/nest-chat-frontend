@@ -9,9 +9,18 @@ interface MessageBubbleProps {
     isMe: boolean;
     isGroup: boolean;
     onUpdate: () => void;
+    previousMessage?: any;
+    showSenderInfo?: boolean;
 }
 
-export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isMe, isGroup, onUpdate }) => {
+export const MessageBubble: React.FC<MessageBubbleProps> = ({
+    message,
+    isMe,
+    isGroup,
+    onUpdate,
+    
+    showSenderInfo = true
+}) => {
     const [isHovered, setIsHovered] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editText, setEditText] = useState(message.text);
@@ -64,34 +73,42 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isMe, isG
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.2 }}
-                className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} group mb-2 md:mb-3`}
+                className={`flex w-full ${isMe ? 'justify-end' : 'justify-start'} group ${showSenderInfo ? 'mb-3 md:mb-3' : 'mb-1'
+                    }`}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
-                <div className={`flex gap-1.5 md:gap-2 max-w-[85%] md:max-w-[75%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
-                    {/* Avatar for other users in group */}
-                    {!isMe && isGroup && (
-                        <div className="flex-shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold shadow-lg ring-2 ring-white/10">
+                {/* Responsive max-width: 85% mobile, 70% tablet, 60% desktop, 55% large */}
+                <div className={`flex gap-2 max-w-[85%] md:max-w-[70%] lg:max-w-[60%] xl:max-w-[55%] ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                    {/* Avatar for other users in group - only show when sender changes */}
+                    {!isMe && isGroup && showSenderInfo && (
+                        <div className="flex-shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white/10 shadow-md">
                             {senderInitial}
                         </div>
                     )}
 
+                    {/* Spacer when avatar is hidden (grouped messages) */}
+                    {!isMe && isGroup && !showSenderInfo && (
+                        <div className="flex-shrink-0 w-7 h-7 md:w-8 md:h-8" />
+                    )}
+
                     <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-                        {/* Sender Name in Group */}
-                        {!isMe && isGroup && (
-                            <span className="text-[10px] md:text-xs font-semibold text-indigo-400 mb-0.5 md:mb-1 ml-1 tracking-wide">
+                        {/* Sender Name in Group - only show when sender changes */}
+                        {!isMe && isGroup && showSenderInfo && (
+                            <span className="text-xs font-semibold text-indigo-400 mb-1 ml-0.5 tracking-wide">
                                 {senderName}
                             </span>
                         )}
 
                         <div className="relative">
-                            {/* Message Bubble */}
+                            {/* Message Bubble - Professional color system */}
                             <div
                                 className={`
-                                    px-3 py-2 md:px-4 md:py-3 shadow-md relative transition-all duration-200 backdrop-blur-sm
+                                    shadow-md relative transition-all duration-200
+                                    px-3 py-2 md:px-3.5 md:py-2.5 lg:px-4 lg:py-3
                                     ${isMe
-                                        ? 'bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-2xl rounded-tr-sm'
-                                        : 'bg-gradient-to-br from-[#1e293b] to-[#253045] text-slate-200 border border-white/5 rounded-2xl rounded-tl-sm shadow-[0_4px_20px_-4px_rgba(0,0,0,0.3)]'
+                                        ? 'bg-gradient-to-br from-[#3b82f6] to-[#2563eb] text-white rounded-[16px] md:rounded-[18px] rounded-tr-md shadow-blue-600/20'
+                                        : 'bg-[#1e293b]/95 text-slate-100 border border-white/10 rounded-[16px] md:rounded-[18px] rounded-tl-md backdrop-blur-sm'
                                     }
                                     ${isHovered ? 'shadow-lg' : ''}
                                 `}
@@ -133,7 +150,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isMe, isG
                                         </div>
                                     </div>
                                 ) : (
-                                    <p className="text-[13px] md:text-[15px] leading-relaxed whitespace-pre-wrap break-words font-normal tracking-wide">
+                                    <p className="text-sm md:text-[15px] leading-normal whitespace-pre-wrap break-words">
                                         {message.text}
                                     </p>
                                 )}
@@ -144,7 +161,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isMe, isG
                                 <motion.div
                                     initial={{ opacity: 0, scale: 0.8 }}
                                     animate={{ opacity: 1, scale: 1 }}
-                                    className={`absolute -top-2 md:-top-3 bg-gradient-to-br from-[#1e293b] to-[#0f172a] border border-white/20 rounded-xl shadow-2xl p-1 flex gap-1 ${isMe ? '-left-1 md:-left-2 transform -translate-x-full' : '-right-1 md:-right-2 transform translate-x-full'
+                                    className={`absolute -top-2 md:-top-3 bg-gradient-to-br from-[#1e293b] to-[#0f172a] border border-white/15 rounded-xl shadow-2xl p-1 flex gap-1 ${isMe ? '-left-1 md:-left-2 transform -translate-x-full' : '-right-1 md:-right-2 transform translate-x-full'
                                         }`}
                                 >
                                     <button
@@ -165,8 +182,8 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isMe, isG
                             )}
                         </div>
 
-                        {/* Timestamp */}
-                        <span className={`text-[9px] md:text-[10px] mt-0.5 md:mt-1 px-1 ${isMe ? 'text-blue-400/70' : 'text-gray-500'}`}>
+                        {/* Timestamp - Professional colors */}
+                        <span className={`text-[10px] mt-1 px-1 ${isMe ? 'text-white/70' : 'text-slate-500'}`}>
                             {new Date(message.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                     </div>

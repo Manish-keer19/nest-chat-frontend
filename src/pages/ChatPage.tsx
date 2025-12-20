@@ -142,10 +142,10 @@ export default function ChatPage() {
 
     return (
         <div className="flex h-screen bg-gradient-to-br from-[#1e293b] to-[#0f172a] font-sans overflow-hidden">
-            {/* Sidebar - Hidden on mobile when chat is active */}
+            {/* Sidebar - Responsive width optimization */}
             <div className={`
                 ${isMobileSidebarOpen || !activeConversationId ? 'flex' : 'hidden'} 
-                md:flex w-full md:w-80 lg:w-96 flex-shrink-0
+                md:flex w-full md:w-80 lg:w-[360px] xl:w-[400px] flex-shrink-0
             `}>
                 <Sidebar
                     conversations={conversations}
@@ -157,10 +157,10 @@ export default function ChatPage() {
                 />
             </div>
 
-            {/* Chat Area - Full width on mobile, flex-1 on desktop */}
+            {/* Chat Area - Constrained max-width for readability on large screens */}
             <div className={`
                 ${!isMobileSidebarOpen || activeConversationId ? 'flex' : 'hidden'} 
-                md:flex flex-1 flex-col min-w-0
+                md:flex flex-1 min-w-0
             `}>
                 <ChatArea
                     conversation={activeConversation}

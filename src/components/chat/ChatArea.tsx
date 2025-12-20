@@ -112,7 +112,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, messages, onSe
     const title = conversation.isGroup ? conversation.name : otherUser?.username;
 
     return (
-        <div className="flex-1 flex flex-col bg-gradient-to-br from-[#0f172a] to-[#0a0a0f] h-full relative overflow-hidden">
+        <div className="flex-1 flex flex-col bg-gradient-to-br from-[#0f172a] to-[#0a0a0f] h-full relative">
             {/* Background decoration */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
                 <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-3xl opacity-50" />
@@ -121,9 +121,9 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, messages, onSe
                 <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:50px_50px]" />
             </div>
 
-            {/* Header - Mobile Optimized */}
-            <div className="h-14 md:h-16 border-b border-white/10 flex items-center justify-between px-3 md:px-6 bg-gradient-to-r from-blue-600/10 to-purple-600/10 backdrop-blur-xl z-20 shadow-lg relative flex-shrink-0">
-                <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
+            {/* Header - Professional glass effect */}
+            <div className="h-16 border-b border-white/10 flex items-center justify-between px-4 md:px-6 bg-[#1e293b]/80 backdrop-blur-xl shadow-sm z-20 relative flex-shrink-0">
+                <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
                     {onBack && (
                         <button
                             onClick={onBack}
@@ -134,26 +134,26 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, messages, onSe
                         </button>
                     )}
                     <div className="relative flex-shrink-0">
-                        <div className={`w-10 h-10 md:w-12 md:h-12 rounded-2xl flex items-center justify-center text-white font-medium shadow-lg ring-2 ring-white/20 ${conversation.isGroup
+                        <div className={`w-11 h-11 md:w-12 md:h-12 rounded-2xl flex items-center justify-center text-white font-medium shadow-lg ring-2 ring-white/20 ${conversation.isGroup
                             ? 'bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500'
                             : 'bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500'
                             }`}>
                             {conversation.isGroup ? <Users className="w-5 h-5 md:w-6 md:h-6" /> : title?.[0]?.toUpperCase()}
                         </div>
                         {!conversation.isGroup && (
-                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0f172a] animate-pulse" />
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0f172a] shadow-sm shadow-green-500/50" />
                         )}
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h2 className="font-bold text-white text-sm md:text-lg tracking-tight truncate">{title}</h2>
+                        <h2 className="font-bold text-white text-base md:text-lg tracking-tight truncate">{title}</h2>
                         {conversation.isGroup ? (
-                            <span className="text-[10px] md:text-xs text-indigo-400 font-medium tracking-wide flex items-center gap-1">
-                                <Users className="w-2.5 h-2.5 md:w-3 md:h-3" />
+                            <span className="text-[11px] md:text-xs text-slate-400 font-medium flex items-center gap-1.5">
+                                <Users className="w-3 h-3" />
                                 {conversation.users.length} members
                             </span>
                         ) : (
-                            <span className="text-[10px] md:text-xs text-green-400 font-medium flex items-center gap-1">
-                                <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full animate-pulse" />
+                            <span className="text-[11px] md:text-xs text-green-400 font-medium flex items-center gap-1.5">
+                                <div className="w-2 h-2 bg-green-500 rounded-full shadow-sm shadow-green-500/50" />
                                 Online
                             </span>
                         )}
@@ -222,14 +222,22 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, messages, onSe
                 )}
             </div>
 
-            {/* Messages - Mobile Optimized */}
-            <div className="flex-1 overflow-y-auto px-3 py-3 md:px-6 md:py-4 space-y-1 md:space-y-0 z-10 scrollbar-thin scrollbar-thumb-gray-700 overscroll-contain">
+            {/* Messages - Responsive padding and spacing */}
+            <div className="flex-1 overflow-y-auto px-3 md:px-4 lg:px-6 py-3 md:py-4 z-10 scrollbar-thin scrollbar-thumb-gray-700 overscroll-contain">
                 <AnimatePresence initial={false}>
                     {messages.map((msg, index) => {
                         const isMe = msg.senderId === currentUser.id;
                         const previousMessage = messages[index - 1];
                         const showDateSeparator = !previousMessage ||
                             new Date(msg.createdAt).toDateString() !== new Date(previousMessage.createdAt).toDateString();
+
+                        // Message grouping: show sender info only when sender changes or time gap > 5min
+                        const timeDiff = previousMessage
+                            ? new Date(msg.createdAt).getTime() - new Date(previousMessage.createdAt).getTime()
+                            : Infinity;
+                        const showSenderInfo = !previousMessage ||
+                            previousMessage.senderId !== msg.senderId ||
+                            timeDiff > 300000; // 5 minutes
 
                         let dateLabel = '';
                         if (showDateSeparator) {
@@ -263,6 +271,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, messages, onSe
                                     isMe={isMe}
                                     isGroup={conversation.isGroup}
                                     onUpdate={onRefresh}
+                                    previousMessage={previousMessage}
+                                    showSenderInfo={showSenderInfo}
                                 />
                             </React.Fragment>
                         );
@@ -271,11 +281,11 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, messages, onSe
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Input - Floating & Modern */}
-            <div ref={inputContainerRef} className="p-4 md:p-6 bg-transparent z-20 flex-shrink-0">
-                <div className="max-w-4xl mx-auto flex items-end gap-2 bg-[#1e293b]/80 backdrop-blur-xl border border-white/10 p-2 rounded-[2rem] shadow-2xl shadow-black/20">
+            {/* Input - Professional glass effect */}
+            <div ref={inputContainerRef} className="p-3 md:p-4 lg:p-5 bg-transparent z-20 flex-shrink-0">
+                <div className="max-w-4xl mx-auto flex items-end gap-2 bg-[#1e293b]/90 backdrop-blur-xl border border-white/15 p-2 md:p-2.5 rounded-2xl md:rounded-3xl shadow-xl shadow-black/10">
                     <button
-                        className="p-3 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors flex-shrink-0"
+                        className="p-2.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-all flex-shrink-0"
                         title="Add attachment"
                     >
                         <Paperclip size={20} />
@@ -283,7 +293,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, messages, onSe
 
                     <textarea
                         ref={textareaRef}
-                        className="flex-1 bg-transparent text-white text-sm md:text-base placeholder-slate-500 resize-none max-h-32 min-h-[24px] py-3 focus:outline-none scrollbar-hide"
+                        className="flex-1 bg-transparent text-white text-[15px] placeholder-slate-500 resize-none max-h-32 min-h-[24px] py-2.5 focus:outline-none scrollbar-hide"
                         placeholder="Type a message..."
                         value={text}
                         onFocus={handleFocus}
@@ -305,7 +315,7 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, messages, onSe
 
                     <div className="flex items-center gap-1">
                         <button
-                            className="p-3 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors flex-shrink-0 md:block hidden"
+                            className="p-2.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-all flex-shrink-0 hidden md:block"
                             title="Emoji"
                         >
                             <Smile size={20} />
@@ -314,10 +324,10 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, messages, onSe
                         <Button
                             onClick={handleSend}
                             disabled={!text.trim()}
-                            className="rounded-full w-10 h-10 md:w-11 md:h-11 flex items-center justify-center bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 active:scale-95 disabled:from-gray-700 disabled:to-gray-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/20 transform transition-all p-0 flex-shrink-0 ml-1"
+                            className="rounded-full w-11 h-11 flex items-center justify-center bg-gradient-to-r from-[#3b82f6] to-[#2563eb] hover:from-blue-500 hover:to-blue-600 active:scale-95 disabled:from-gray-700 disabled:to-gray-800 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-600/25 transform transition-all p-0 flex-shrink-0"
                             aria-label="Send message"
                         >
-                            <Send className="w-4 h-4 md:w-5 md:h-5 ml-0.5 text-white" />
+                            <Send className="w-5 h-5 text-white ml-0.5" />
                         </Button>
                     </div>
                 </div>

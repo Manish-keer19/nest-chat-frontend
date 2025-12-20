@@ -49,7 +49,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     });
 
     return (
-        <div className="w-full bg-gradient-to-b from-[#1e293b] to-[#0f172a] border-r border-white/10 flex flex-col h-full shadow-2xl z-20">
+        <div className="w-full bg-[#111827] border-r border-white/8 flex flex-col h-full shadow-2xl z-20">
             {/* Header - Compact & Clean */}
             <div className="px-4 pt-4 pb-2 flex-shrink-0 space-y-3">
                 <div className="flex items-center justify-between">
@@ -132,9 +132,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                             transition={{ duration: 0.2 }}
                             className="h-full flex flex-col"
                         >
-                            <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1 scrollbar-thin scrollbar-thumb-gray-800 scrollbar-track-transparent">
+                            <div className="flex-1 overflow-y-auto px-2 py-2 space-y-1 scrollbar-thin scrollbar-thumb-slate-600 scrollbar-track-transparent">
                                 {filteredConversations.length === 0 ? (
-                                    <div className="flex flex-col items-center justify-center py-12 text-gray-500 opacity-50">
+                                    <div className="flex flex-col items-center justify-center py-12 text-slate-500 opacity-50">
                                         <MessageSquare className="w-10 h-10 mb-2" />
                                         <p className="text-xs">No conversations</p>
                                     </div>
@@ -158,47 +158,51 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                 animate={{ opacity: 1, y: 0 }}
                                                 onClick={() => onSelectConversation(conv.id)}
                                                 className={`
-                                                    group relative p-2 rounded-xl cursor-pointer transition-all duration-200 
-                                                    flex items-center gap-3 touch-manipulation
+                                                    group relative rounded-2xl cursor-pointer transition-all duration-200 
+                                                    flex items-center touch-manipulation
+                                                    p-2.5 md:p-3 gap-2.5 md:gap-3
+                                                    hover:scale-[1.01] active:scale-[0.99]
                                                     ${isActive
-                                                        ? 'bg-white/10'
-                                                        : 'hover:bg-white/5'
+                                                        ? 'bg-gradient-to-r from-blue-600/15 to-purple-600/15 border-l-2 border-blue-500 shadow-lg shadow-blue-500/15'
+                                                        : 'hover:bg-white/5 border-l-2 border-transparent'
                                                     }
                                                 `}
                                             >
-                                                {/* Avatar */}
+                                                {/* Avatar - Responsive sizing */}
                                                 <div className="relative flex-shrink-0">
                                                     <div className={`
-                                                        w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-xs
-                                                        shadow-md ring-1 ring-white/10
+                                                        w-9 h-9 md:w-10 md:h-10 lg:w-11 lg:h-11 rounded-full 
+                                                        flex items-center justify-center text-white font-bold 
+                                                        text-xs md:text-sm shadow-md ring-2 ring-white/10
                                                         ${conv.isGroup
                                                             ? 'bg-gradient-to-br from-indigo-500 to-purple-500'
                                                             : 'bg-gradient-to-br from-blue-500 to-cyan-500'
                                                         }
                                                     `}>
                                                         {conv.isGroup
-                                                            ? <Users className="w-4 h-4" />
+                                                            ? <Users className="w-3.5 h-3.5 md:w-4 md:h-4" />
                                                             : displayName[0]?.toUpperCase() || 'U'
                                                         }
                                                     </div>
                                                     {!conv.isGroup && (
-                                                        <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#0f172a]" />
+                                                        <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#111827] shadow-sm shadow-green-500/50" />
                                                     )}
                                                 </div>
 
-                                                {/* Content */}
+                                                {/* Content - Responsive truncation */}
                                                 <div className="flex-1 min-w-0">
-                                                    <div className="flex justify-between items-baseline">
-                                                        <h3 className={`font-medium truncate text-sm ${isActive ? 'text-white' : 'text-slate-200'}`}>
+                                                    <div className="flex justify-between items-baseline mb-0.5">
+                                                        <h3 className={`font-medium truncate text-sm ${isActive ? 'text-white' : 'text-slate-200'
+                                                            }`}>
                                                             {displayName}
                                                         </h3>
                                                         {lastMessage && (
-                                                            <span className="text-[10px] text-slate-500">
+                                                            <span className="text-[11px] text-slate-500 ml-2 flex-shrink-0">
                                                                 {new Date(lastMessage.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <p className="text-xs text-slate-400 truncate opacity-80">
+                                                    <p className="text-[13px] text-slate-400 truncate max-w-[140px] md:max-w-[180px] lg:max-w-[220px]">
                                                         {conv.isGroup && lastMessage ? (
                                                             <span className="font-semibold mr-1">{lastMessage.sender?.username}:</span>
                                                         ) : null}
@@ -228,14 +232,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             {/* Footer - Minimalist */}
             <div className="p-3 border-t border-white/5 bg-[#0f172a]/50 flex items-center gap-3 backdrop-blur-sm">
-                <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-xs shadow-md">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md ring-2 ring-white/15">
                     {currentUser?.username?.[0]?.toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-white truncate">{currentUser?.username}</p>
-                    <div className="flex items-center gap-1">
-                        <div className="w-1.5 h-1.5 bg-green-500 rounded-full" />
-                        <p className="text-[10px] text-slate-400">Online</p>
+                    <div className="flex items-center gap-1.5">
+                        <div className="w-2 h-2 bg-green-500 rounded-full shadow-sm shadow-green-500/50" />
+                        <p className="text-[11px] text-green-400 font-medium">Online</p>
                     </div>
                 </div>
                 <div className="flex items-center gap-1">
