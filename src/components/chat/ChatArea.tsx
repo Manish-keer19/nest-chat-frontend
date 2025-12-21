@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/Button';
 import { MessageBubble } from './MessageBubble';
+import { ChatHeaderSkeleton, MessageSkeleton } from '../ui/Skeleton';
 import { Send, MoreVertical, Trash2, ArrowLeft, Info, UserPlus, Users, AlertTriangle, Paperclip, Smile } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { GroupDetailsModal } from './GroupDetailsModal';
+import { EmojiPicker } from './EmojiPicker';
 import api from '../../api';
 
 interface ChatAreaProps {
@@ -13,13 +15,15 @@ interface ChatAreaProps {
     currentUser: any;
     onRefresh: () => void;
     onBack?: () => void;
+    isLoading?: boolean;
 }
 
-export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, messages, onSendMessage, currentUser, onRefresh, onBack }) => {
+export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, messages, onSendMessage, currentUser, onRefresh, onBack, isLoading = false }) => {
     const [text, setText] = useState('');
     const [showAdminMenu, setShowAdminMenu] = useState(false);
     const [showGroupDetails, setShowGroupDetails] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [deleteAction, setDeleteAction] = useState<'delete' | 'leave' | null>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -32,6 +36,18 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, messages, onSe
     useEffect(() => {
         scrollToBottom();
     }, [messages]);
+
+    // Close emoji picker when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (showEmojiPicker && inputContainerRef.current && !inputContainerRef.current.contains(event.target as Node)) {
+                setShowEmojiPicker(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [showEmojiPicker]);
 
     // Scroll input into view when keyboard opens on mobile
     const handleFocus = () => {
@@ -48,6 +64,12 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, messages, onSe
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto';
         }
+    };
+
+    const handleEmojiSelect = (emoji: string) => {
+        setText(prev => prev + emoji);
+        // Focus back on textarea
+        textareaRef.current?.focus();
     };
 
     const handleDeleteGroup = () => {
@@ -100,6 +122,20 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, messages, onSe
                     <p className="text-slate-400 leading-relaxed">
                         Select a conversation from the sidebar or start a new one to begin messaging.
                     </p>
+                </div>
+            </div>
+        );
+    }
+
+    // Show skeleton loading while fetching conversation/messages
+    if (isLoading) {
+        return (
+            <div className="flex-1 flex flex-col bg-gradient-to-br from-[#0f172a] to-[#0a0a0f] h-full">
+                <ChatHeaderSkeleton />
+                <div className="flex-1 overflow-y-auto px-3 md:px-4 lg:px-6 py-3 md:py-4">
+                    {[...Array(5)].map((_, i) => (
+                        <MessageSkeleton key={i} isMe={i % 2 === 0} />
+                    ))}
                 </div>
             </div>
         );
@@ -313,13 +349,27 @@ export const ChatArea: React.FC<ChatAreaProps> = ({ conversation, messages, onSe
                         style={{ height: 'auto' }}
                     />
 
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-1 relative">
                         <button
-                            className="p-2.5 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-all flex-shrink-0 hidden md:block"
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            className={`p-2.5 rounded-full transition-all flex-shrink-0 ${showEmojiPicker
+                                ? 'text-blue-400 bg-blue-500/20'
+                                : 'text-slate-400 hover:text-white hover:bg-white/10'
+                                }`}
                             title="Emoji"
                         >
                             <Smile size={20} />
                         </button>
+
+                        {/* Emoji Picker */}
+                        <AnimatePresence>
+                            {showEmojiPicker && (
+                                <EmojiPicker
+                                    onEmojiSelect={handleEmojiSelect}
+                                    onClose={() => setShowEmojiPicker(false)}
+                                />
+                            )}
+                        </AnimatePresence>
 
                         <Button
                             onClick={handleSend}

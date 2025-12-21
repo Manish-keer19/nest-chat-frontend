@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Button } from '../components/ui/Button';
-import { MessageCircle, LogOut, LogIn, UserPlus, Github, Mail, MapPin, Calendar, Code2, Database, Server, Zap, Sparkles, Rocket, Trophy, GitBranch, Star, ExternalLink, ChevronRight } from 'lucide-react';
+import { MessageCircle, LogOut, LogIn, UserPlus, Github, Mail, MapPin, Calendar, Code2, Database, Server, Zap, Sparkles, Rocket, Trophy, GitBranch, Star, ExternalLink, ChevronRight, Layers, Box, FileCode } from 'lucide-react';
 
 export default function Home() {
     const navigate = useNavigate();
@@ -32,12 +33,12 @@ export default function Home() {
         github: "Manish-keer19",
         bio: "Passionate developer building modern web applications with cutting-edge technologies. Specialized in React, Node.js, NestJS, and real-time applications.",
         skills: [
-            { name: "React", level: 90, color: "from-cyan-400 to-blue-500", icon: "⚛️" },
-            { name: "Node.js", level: 85, color: "from-green-400 to-emerald-600", icon: "🟢" },
-            { name: "NestJS", level: 88, color: "from-red-500 to-pink-600", icon: "🔴" },
-            { name: "TypeScript", level: 92, color: "from-blue-500 to-indigo-600", icon: "💙" },
-            { name: "PostgreSQL", level: 80, color: "from-blue-600 to-cyan-600", icon: "🐘" },
-            { name: "Socket.io", level: 85, color: "from-yellow-400 to-orange-500", icon: "⚡" },
+            { name: "React", level: 90, color: "from-cyan-400 to-blue-500", icon: Layers, bgColor: "from-cyan-500/20 to-blue-600/20" },
+            { name: "Node.js", level: 85, color: "from-green-400 to-emerald-600", icon: Server, bgColor: "from-green-500/20 to-emerald-600/20" },
+            { name: "NestJS", level: 88, color: "from-red-500 to-pink-600", icon: Box, bgColor: "from-red-500/20 to-pink-600/20" },
+            { name: "TypeScript", level: 92, color: "from-blue-500 to-indigo-600", icon: FileCode, bgColor: "from-blue-500/20 to-indigo-600/20" },
+            { name: "PostgreSQL", level: 80, color: "from-blue-600 to-cyan-600", icon: Database, bgColor: "from-blue-600/20 to-cyan-600/20" },
+            { name: "Socket.io", level: 85, color: "from-yellow-400 to-orange-500", icon: Zap, bgColor: "from-yellow-500/20 to-orange-600/20" },
         ],
         stats: [
             { label: "Projects Completed", value: "40+", icon: Trophy, color: "text-yellow-400" },
@@ -128,29 +129,52 @@ export default function Home() {
                 </div>
             </nav>
 
-            {/* Hero Section */}
+            {/* Hero Section - Enhanced with Animations */}
             <main className="relative z-10 max-w-7xl mx-auto px-4 md:px-6 py-12 md:py-20">
-                <div className="text-center mb-16 md:mb-24">
-                    {/* Profile Image */}
-                    <div className="mb-8 flex justify-center">
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.6 }}
+                    className="text-center mb-16 md:mb-24"
+                >
+                    {/* Profile Image - Enhanced */}
+                    <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 0.5, delay: 0.2 }}
+                        className="mb-8 flex justify-center"
+                    >
                         <div className="relative group">
                             <div className="absolute inset-0 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 rounded-full blur-2xl opacity-50 group-hover:opacity-75 transition-opacity duration-500 animate-pulse" />
-                            <div className="relative">
-                                <div className="w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden shadow-2xl border-4 border-white/10 group-hover:scale-105 group-hover:border-white/20 transition-all duration-500">
+                            <motion.div
+                                whileHover={{ scale: 1.05, rotate: 2 }}
+                                transition={{ type: "spring", stiffness: 300 }}
+                                className="relative"
+                            >
+                                <div className="w-28 h-28 md:w-36 md:h-36 rounded-full overflow-hidden shadow-2xl border-4 border-white/10 group-hover:border-white/20 transition-all duration-500">
                                     <img
                                         src="https://res.cloudinary.com/manish19/image/upload/v1752930717/spring/profile/kjtwypqrvzgapyutbmlh.jpg"
                                         alt="Manish Keer"
                                         className="w-full h-full object-cover"
                                     />
                                 </div>
-                                <div className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full border-4 border-[#0a0a0f] flex items-center justify-center">
+                                <motion.div
+                                    animate={{ rotate: [0, 10, -10, 0] }}
+                                    transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                                    className="absolute -bottom-2 -right-2 w-10 h-10 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full border-4 border-[#0a0a0f] flex items-center justify-center"
+                                >
                                     <Star className="w-5 h-5 text-white fill-white" />
-                                </div>
-                            </div>
+                                </motion.div>
+                            </motion.div>
                         </div>
-                    </div>
+                    </motion.div>
 
-                    <div className="space-y-4 mb-8">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.3 }}
+                        className="space-y-4 mb-8"
+                    >
                         <h1 className="text-5xl md:text-6xl lg:text-7xl font-black bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient leading-tight">
                             {developerInfo.name}
                         </h1>
@@ -158,48 +182,74 @@ export default function Home() {
                             {developerInfo.title}
                         </p>
                         <div className="flex flex-wrap items-center justify-center gap-4 text-sm md:text-base text-slate-400">
-                            <div className="flex items-center gap-2">
+                            <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                className="flex items-center gap-2"
+                            >
                                 <MapPin className="w-4 h-4 text-blue-400" />
                                 <span>{developerInfo.location}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
+                            </motion.div>
+                            <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                className="flex items-center gap-2"
+                            >
                                 <Mail className="w-4 h-4 text-purple-400" />
                                 <span>{developerInfo.email}</span>
-                            </div>
-                            <div className="flex items-center gap-2">
+                            </motion.div>
+                            <motion.div
+                                whileHover={{ scale: 1.05 }}
+                                className="flex items-center gap-2"
+                            >
                                 <Calendar className="w-4 h-4 text-pink-400" />
                                 <span>Available for work</span>
-                            </div>
+                            </motion.div>
                         </div>
-                    </div>
+                    </motion.div>
 
-                    <p className="text-base md:text-lg text-slate-400 max-w-3xl mx-auto mb-8 leading-relaxed px-4">
+                    <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.6, delay: 0.5 }}
+                        className="text-base md:text-lg text-slate-400 max-w-3xl mx-auto mb-8 leading-relaxed px-4"
+                    >
                         {developerInfo.bio}
-                    </p>
+                    </motion.p>
 
-                    {/* Action Buttons */}
-                    <div className="flex flex-wrap items-center justify-center gap-4">
-                        <a
+                    {/* Action Buttons - Enhanced */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6, delay: 0.6 }}
+                        className="flex flex-wrap items-center justify-center gap-4"
+                    >
+                        <motion.a
+                            whileHover={{ scale: 1.05, y: -2 }}
+                            whileTap={{ scale: 0.95 }}
                             href={`https://github.com/${developerInfo.github}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="group inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 hover:scale-105"
+                            className="group inline-flex items-center gap-2 px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-xl transition-all duration-300 hover:shadow-lg"
                         >
                             <Github className="w-5 h-5" />
                             <span className="font-medium">GitHub</span>
                             <ExternalLink className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
-                        </a>
+                        </motion.a>
                         {isLoggedIn && (
                             <Link to="/conversations">
-                                <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl shadow-lg shadow-blue-600/30 transition-all duration-300 hover:scale-105 flex items-center gap-2">
-                                    <MessageCircle className="w-5 h-5" />
-                                    <span>Start Chatting</span>
-                                    <ChevronRight className="w-4 h-4" />
-                                </Button>
+                                <motion.div
+                                    whileHover={{ scale: 1.05, y: -2 }}
+                                    whileTap={{ scale: 0.95 }}
+                                >
+                                    <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-xl shadow-lg shadow-blue-600/30 transition-all duration-300 flex items-center gap-2">
+                                        <MessageCircle className="w-5 h-5" />
+                                        <span>Start Chatting</span>
+                                        <ChevronRight className="w-4 h-4" />
+                                    </Button>
+                                </motion.div>
                             </Link>
                         )}
-                    </div>
-                </div>
+                    </motion.div>
+                </motion.div>
 
                 {/* Stats */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16 md:mb-24">
@@ -246,34 +296,57 @@ export default function Home() {
                     </div>
                 </div>
 
-                {/* Skills */}
+                {/* Skills - Enhanced with Icons */}
                 <div className="mb-16 md:mb-24">
-                    <h2 className="text-3xl md:text-4xl font-bold text-center mb-12 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
+                    <motion.h2
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="text-3xl md:text-4xl font-bold text-center mb-12 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent"
+                    >
                         Technical Expertise
-                    </h2>
+                    </motion.h2>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {developerInfo.skills.map((skill, index) => (
-                            <div
+                            <motion.div
                                 key={index}
-                                className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 hover:bg-white/10 transition-all duration-300"
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: index * 0.1 }}
+                                whileHover={{ scale: 1.02, y: -4 }}
+                                className="group relative bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 hover:border-white/20 hover:bg-white/10 transition-all duration-300 hover:shadow-2xl"
                             >
                                 <div className={`absolute inset-0 bg-gradient-to-br ${skill.color} opacity-0 group-hover:opacity-10 rounded-2xl transition-opacity duration-300`} />
                                 <div className="relative">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-3">
-                                            <span className="text-3xl">{skill.icon}</span>
+                                            {/* Icon with gradient background */}
+                                            <motion.div
+                                                whileHover={{ rotate: 360, scale: 1.1 }}
+                                                transition={{ duration: 0.6 }}
+                                                className={`w-12 h-12 rounded-xl bg-gradient-to-br ${skill.bgColor} flex items-center justify-center border border-white/10 shadow-lg`}
+                                            >
+                                                <skill.icon className={`w-6 h-6 bg-gradient-to-br ${skill.color} bg-clip-text text-transparent`} style={{ WebkitTextFillColor: 'transparent', WebkitBackgroundClip: 'text' }} />
+                                            </motion.div>
                                             <span className="text-lg font-bold text-white">{skill.name}</span>
                                         </div>
                                         <span className="text-sm font-bold text-blue-400">{skill.level}%</span>
                                     </div>
+                                    {/* Progress Bar */}
                                     <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full bg-gradient-to-r ${skill.color} rounded-full transition-all duration-1000 ease-out`}
-                                            style={{ width: `${skill.level}%` }}
-                                        />
+                                        <motion.div
+                                            initial={{ width: 0 }}
+                                            whileInView={{ width: `${skill.level}%` }}
+                                            viewport={{ once: true }}
+                                            transition={{ duration: 1, delay: index * 0.1 + 0.3 }}
+                                            className={`h-full bg-gradient-to-r ${skill.color} rounded-full relative`}
+                                        >
+                                            <div className="absolute inset-0 bg-white/20 animate-pulse" />
+                                        </motion.div>
                                     </div>
                                 </div>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
                 </div>

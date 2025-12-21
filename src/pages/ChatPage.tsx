@@ -15,6 +15,8 @@ export default function ChatPage() {
     const [messages, setMessages] = useState<any[]>([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(true);
+    const [isLoadingConversations, setIsLoadingConversations] = useState(true);
+    const [isLoadingMessages, setIsLoadingMessages] = useState(false);
 
     // Initialize User
     useEffect(() => {
@@ -71,14 +73,16 @@ export default function ChatPage() {
         activeConversationIdRef.current = activeConversationId;
     }, [activeConversationId]);
 
-
     const fetchConversations = async () => {
         if (!user) return;
+        setIsLoadingConversations(true);
         try {
             const res = await api.get(`/conversations/user/${user.id}`);
             setConversations(res.data);
         } catch (e) {
             console.error('Failed to fetch conversations', e);
+        } finally {
+            setIsLoadingConversations(false);
         }
     };
 
@@ -86,12 +90,15 @@ export default function ChatPage() {
 
     const refreshMessages = async () => {
         if (activeConversationId) {
+            setIsLoadingMessages(true);
             try {
                 const res = await api.get(`/conversations/${activeConversationId}`);
                 setMessages(res.data);
                 fetchConversations(); // Update sidebars last message too
             } catch (e) {
                 console.error('Failed to fetch messages', e);
+            } finally {
+                setIsLoadingMessages(false);
             }
         }
     };
@@ -99,12 +106,15 @@ export default function ChatPage() {
     const handleSelectConversation = async (id: string) => {
         setActiveConversationId(id);
         setIsMobileSidebarOpen(false); // Hide sidebar on mobile when conversation is selected
+        setIsLoadingMessages(true);
         socket?.emit('join-conversation', id);
         try {
             const res = await api.get(`/conversations/${id}`);
             setMessages(res.data);
         } catch (e) {
             console.error('Failed to fetch messages', e);
+        } finally {
+            setIsLoadingMessages(false);
         }
     };
 
@@ -144,8 +154,8 @@ export default function ChatPage() {
         <div className="flex h-screen bg-gradient-to-br from-[#1e293b] to-[#0f172a] font-sans overflow-hidden">
             {/* Sidebar - Responsive width optimization */}
             <div className={`
-                ${isMobileSidebarOpen || !activeConversationId ? 'flex' : 'hidden'} 
-                md:flex w-full md:w-80 lg:w-[360px] xl:w-[400px] flex-shrink-0
+                ${isMobileSidebarOpen || !activeConversationId ? 'flex w-full' : 'hidden'} 
+                md:flex md:w-80 lg:w-[360px] xl:w-[400px] flex-shrink-0
             `}>
                 <Sidebar
                     conversations={conversations}
@@ -154,6 +164,7 @@ export default function ChatPage() {
                     onCreateGroup={() => setIsModalOpen(true)}
                     onStartChat={handleStartChat}
                     currentUser={user}
+                    isLoading={isLoadingConversations}
                 />
             </div>
 
@@ -169,6 +180,7 @@ export default function ChatPage() {
                     currentUser={user}
                     onRefresh={refreshMessages}
                     onBack={handleBackToList}
+                    isLoading={isLoadingMessages}
                 />
             </div>
 
