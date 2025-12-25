@@ -15,6 +15,7 @@ interface SidebarProps {
     onStartChat: (userId: string) => void;
     currentUser: any;
     isLoading?: boolean;
+    onlineUsers?: { [userId: string]: { isOnline: boolean, lastSeen: string | null } };
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -24,7 +25,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     onCreateGroup,
     onStartChat,
     currentUser,
-    isLoading = false
+    isLoading = false,
+    onlineUsers = {}
 }) => {
     const [activeTab, setActiveTab] = useState<'chats' | 'explore'>('chats');
     const [showLogoutModal, setShowLogoutModal] = useState(false);
@@ -163,6 +165,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                         const lastMessage = conv.messages?.[0];
                                         const isActive = activeConversationId === conv.id;
 
+                                        const isOnline = otherUser ? onlineUsers[otherUser.userId]?.isOnline : false;
+
                                         return (
                                             <motion.div
                                                 key={conv.id}
@@ -203,7 +207,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                                                                 size="md"
                                                                 className="md:w-10 md:h-10 lg:w-11 lg:h-11 rounded-full ring-2 ring-white/10"
                                                             />
-                                                            <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#111827] shadow-sm shadow-green-500/50" />
+                                                            {isOnline && (
+                                                                <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-[#111827] shadow-sm shadow-green-500/50" />
+                                                            )}
                                                         </>
                                                     )}
                                                 </div>

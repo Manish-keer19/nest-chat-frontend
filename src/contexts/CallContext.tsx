@@ -10,6 +10,7 @@ interface CallContextType {
     incomingCall: IncomingCall | null;
     isMuted: boolean;
     isVideoOff: boolean;
+    isScreenSharing: boolean;
     initiateCall: (
         recipientIds: string[],
         callType: 'AUDIO_1TO1' | 'VIDEO_1TO1' | 'AUDIO_GROUP' | 'VIDEO_GROUP',
@@ -20,6 +21,8 @@ interface CallContextType {
     endCall: () => void;
     toggleMute: () => void;
     toggleVideo: () => void;
+    toggleScreenShare: () => void;
+    switchCamera: () => Promise<void>;
 }
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
@@ -48,6 +51,9 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children, userId, us
                 endCall: webRTC.endCall,
                 toggleMute: webRTC.toggleMute,
                 toggleVideo: webRTC.toggleVideo,
+                toggleScreenShare: webRTC.toggleScreenShare,
+                isScreenSharing: webRTC.isScreenSharing,
+                switchCamera: webRTC.switchCamera,
             }}
         >
             {children}

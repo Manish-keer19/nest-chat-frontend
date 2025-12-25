@@ -51,6 +51,8 @@ export const useWebRTC = (userId: string, username: string) => {
     const [incomingCall, setIncomingCall] = useState<IncomingCall | null>(null);
     const [isMuted, setIsMuted] = useState(false);
     const [isVideoOff, setIsVideoOff] = useState(false);
+    const [isScreenSharing, setIsScreenSharing] = useState(false);
+    const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
 
     // Refs to avoid stale closures
     const localStreamRef = useRef<MediaStream | null>(null);
@@ -234,9 +236,10 @@ export const useWebRTC = (userId: string, username: string) => {
                 },
                 video: isVideo
                     ? {
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 },
-                        frameRate: { ideal: 30 },
+                        width: { min: 640, ideal: 1920, max: 1920 },
+                        height: { min: 400, ideal: 1080, max: 1080 },
+                        aspectRatio: { ideal: 1.7777777778 }, // 16:9
+                        frameRate: { min: 15, ideal: 30, max: 60 },
                     }
                     : false,
             };
@@ -610,6 +613,141 @@ export const useWebRTC = (userId: string, username: string) => {
     };
 
     /**
+     * Toggle screen share
+     */
+    const toggleScreenShare = async () => {
+        if (!socket || !activeCall) return;
+
+        try {
+            if (isScreenSharing) {
+                // Stop screen share and revert to camera
+                const stream = await getUserMedia(!isVideoOff);
+                const videoTrack = stream.getVideoTracks()[0];
+
+                if (localStream) {
+                    // Stop screen share track
+                    const screenTrack = localStream.getVideoTracks()[0];
+                    screenTrack.stop();
+
+                    // Add camera track to local stream
+                    localStream.removeTrack(screenTrack);
+                    localStream.addTrack(videoTrack);
+                    setLocalStream(new MediaStream([videoTrack, ...localStream.getAudioTracks()]));
+                }
+
+                // Replace track in all peer connections
+                peerConnections.current.forEach((pc) => {
+                    const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
+                    if (sender) {
+                        sender.replaceTrack(videoTrack);
+                    }
+                });
+
+                setIsScreenSharing(false);
+            } else {
+                // Start screen share
+                const stream = await navigator.mediaDevices.getDisplayMedia({ video: true, audio: true });
+                const screenTrack = stream.getVideoTracks()[0];
+
+                // Handle user stopping screen share via browser UI
+                screenTrack.onended = () => {
+                    if (isScreenSharing) toggleScreenShare();
+                };
+
+                if (localStream) {
+                    // Stop camera track
+                    localStream.getVideoTracks().forEach(track => track.stop());
+
+                    // Add screen track to local stream
+                    const audioTracks = localStream.getAudioTracks();
+                    setLocalStream(new MediaStream([screenTrack, ...audioTracks]));
+                } else {
+                    setLocalStream(stream);
+                }
+
+                // Replace track in all peer connections
+                peerConnections.current.forEach(async (pc, participantId) => {
+                    const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
+                    if (sender) {
+                        sender.replaceTrack(screenTrack);
+                    } else {
+                        // If no video sender (e.g. audio only call), add track
+                        pc.addTrack(screenTrack, localStream!);
+                        await createAndSendOffer(participantId, pc);
+                    }
+                });
+
+                setIsScreenSharing(true);
+            }
+        } catch (error) {
+            console.error('Error toggling screen share:', error);
+        }
+    };
+
+    /**
+     * Switch Camera (Front/Rear)
+     */
+    const switchCamera = async () => {
+        if (!localStream || isScreenSharing || isVideoOff) return;
+
+        try {
+            const newFacingMode = facingMode === 'user' ? 'environment' : 'user';
+            console.log('Switching camera to:', newFacingMode);
+
+            const constraints: MediaStreamConstraints = {
+                video: {
+                    facingMode: { exact: newFacingMode },
+                    width: { ideal: 1920 },
+                    height: { ideal: 1080 },
+                }
+            };
+
+            let newStream: MediaStream;
+            try {
+                newStream = await navigator.mediaDevices.getUserMedia(constraints);
+            } catch (e) {
+                // Fallback without exact constraint if it fails (e.g. on desktop)
+                console.warn('Exact facing mode failed, trying loose constraint', e);
+                const looseConstraints: MediaStreamConstraints = {
+                    video: {
+                        facingMode: newFacingMode,
+                    }
+                };
+                newStream = await navigator.mediaDevices.getUserMedia(looseConstraints);
+            }
+
+            const newVideoTrack = newStream.getVideoTracks()[0];
+
+            // Stop old video track
+            const oldVideoTrack = localStream.getVideoTracks()[0];
+            if (oldVideoTrack) {
+                oldVideoTrack.stop();
+                localStream.removeTrack(oldVideoTrack);
+            }
+
+            // Add new track to local stream
+            localStream.addTrack(newVideoTrack);
+
+            // Force state update to refresh local video element
+            setLocalStream(new MediaStream(localStream.getTracks()));
+
+            // Replace track in all peer connections
+            peerConnections.current.forEach((pc) => {
+                const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
+                if (sender) {
+                    sender.replaceTrack(newVideoTrack);
+                }
+            });
+
+            setFacingMode(newFacingMode);
+
+        } catch (error) {
+            console.error('Error switching camera:', error);
+            // Optionally show user feedback
+        }
+    };
+
+    /**
      * Cleanup call resources
      */
     const cleanupCall = () => {
@@ -646,5 +784,8 @@ export const useWebRTC = (userId: string, username: string) => {
         endCall,
         toggleMute,
         toggleVideo,
+        toggleScreenShare,
+        isScreenSharing,
+        switchCamera,
     };
 };

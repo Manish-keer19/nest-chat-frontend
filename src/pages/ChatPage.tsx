@@ -20,6 +20,7 @@ export default function ChatPage() {
     const [isLoadingConversations, setIsLoadingConversations] = useState(true);
     const [isLoadingMessages, setIsLoadingMessages] = useState(false);
     const [typingUsers, setTypingUsers] = useState<{ [conversationId: string]: any[] }>({});
+    const [onlineUsers, setOnlineUsers] = useState<{ [userId: string]: { isOnline: boolean, lastSeen: string | null } }>({});
 
     // Initialize User
     useEffect(() => {
@@ -100,6 +101,13 @@ export default function ChatPage() {
             ));
         });
 
+        newSocket.on('user-presence-update', (data: { userId: string; isOnline: boolean; lastSeen: string | null }) => {
+            setOnlineUsers(prev => ({
+                ...prev,
+                [data.userId]: { isOnline: data.isOnline, lastSeen: data.lastSeen }
+            }));
+        });
+
         setSocket(newSocket);
         fetchConversations();
 
@@ -120,6 +128,33 @@ export default function ChatPage() {
         try {
             const res = await api.get(`/conversations/user/${user.id}`);
             setConversations(res.data);
+
+            // Extract all other user IDs to initial fetch online status if needed
+            // Ideally backend returns this with conversations, or we fetch separate/bulk
+            // For now, let's assume `user-presence-update` will handle real-time, 
+            // and we initialize from conversation data if available (backfill needed in backend response)
+            // or fetch explicitly.
+
+            const userIds = new Set<string>();
+            res.data.forEach((c: any) => {
+                c.users?.forEach((u: any) => {
+                    if (u.userId !== user.id) userIds.add(u.userId);
+                });
+            });
+
+            // Optional: Bulk fetch presence state. For now, rely on updates or modify backend to return it.
+            if (userIds.size > 0) {
+                try {
+                    const presenceRes = await api.post('/users/presence', { userIds: Array.from(userIds) });
+                    setOnlineUsers(prev => ({
+                        ...prev,
+                        ...presenceRes.data.reduce((acc: any, curr: any) => ({ ...acc, [curr.id]: { isOnline: curr.isOnline, lastSeen: curr.lastSeen } }), {})
+                    }));
+                } catch (e) {
+                    // Silently fail or log
+                    console.warn("Failed to fetch initial presence", e);
+                }
+            }
         } catch (e) {
             console.error('Failed to fetch conversations', e);
         } finally {
@@ -241,6 +276,7 @@ export default function ChatPage() {
                     onStartChat={handleStartChat}
                     currentUser={user}
                     isLoading={isLoadingConversations}
+                    onlineUsers={onlineUsers}
                 />
             </div>
 
@@ -260,6 +296,7 @@ export default function ChatPage() {
                     onRefresh={refreshMessages}
                     onBack={handleBackToList}
                     isLoading={isLoadingMessages}
+                    onlineUsers={onlineUsers}
                 />
             </div>
 

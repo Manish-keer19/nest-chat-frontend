@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { motion } from 'framer-motion';
 import { useCall } from '../contexts/CallContext';
 
 export const OngoingCallUI: React.FC = () => {
@@ -11,10 +12,15 @@ export const OngoingCallUI: React.FC = () => {
         toggleMute,
         toggleVideo,
         endCall,
+        toggleScreenShare,
+        isScreenSharing,
+        switchCamera,
     } = useCall();
 
     const localVideoRef = useRef<HTMLVideoElement>(null);
     const remoteVideoRefs = useRef<Map<string, HTMLVideoElement>>(new Map());
+    const [isLocalMain, setIsLocalMain] = useState(false);
+    const constraintsRef = useRef<HTMLDivElement>(null);
 
     // Attach local stream to video element
     useEffect(() => {
@@ -72,58 +78,113 @@ export const OngoingCallUI: React.FC = () => {
                 {isVideoCall ? (
                     remoteStreamCount === 1 ? (
                         // 1-on-1 Call: Picture-in-Picture Layout
-                        <div className="w-full h-full relative">
-                            {/* Remote User (Full Screen) */}
-                            {Array.from(remoteStreams.entries()).map(([userId]) => (
-                                <div key={userId} className="absolute inset-0 z-0">
-                                    <video
-                                        ref={(el) => {
-                                            if (el) {
-                                                remoteVideoRefs.current.set(userId, el);
-                                                const stream = remoteStreams.get(userId);
-                                                if (stream && el.srcObject !== stream) {
-                                                    console.log('Immediately attaching stream to video for:', userId);
-                                                    el.srcObject = stream;
-                                                    el.play().catch(err => console.error('Video autoplay prevented:', err));
-                                                }
-                                            }
-                                        }}
-                                        autoPlay
-                                        playsInline
-                                        className="w-full h-full object-cover"
-                                    />
-                                    {/* Name Overlay */}
-                                    <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full">
-                                        <span className="text-white font-medium text-lg drop-shadow-md">
-                                            {activeCall.participants.find((p) => p.userId === userId)?.username || 'User'}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
+                        // 1-on-1 Call: Picture-in-Picture Layout
+                        <div ref={constraintsRef} className="w-full h-full relative overflow-hidden">
+                            {/* Main Video (Full Screen) */}
+                            {(() => {
+                                // Determine Main Stream
+                                const remoteEntry = Array.from(remoteStreams.entries())[0];
+                                const remoteUserId = remoteEntry?.[0];
+                                const remoteStream = remoteEntry?.[1];
 
-                            {/* Local User (Floating PiP) */}
-                            <div className="absolute bottom-24 right-4 w-32 h-44 md:w-48 md:h-64 bg-gray-900/90 backdrop-blur-sm rounded-xl overflow-hidden shadow-2xl border border-white/20 z-10 transition-all hover:scale-105 origin-bottom-right">
-                                <video
-                                    ref={(el) => {
-                                        localVideoRef.current = el;
-                                        if (el && localStream) {
-                                            el.srcObject = localStream;
-                                            el.play().catch(console.error);
-                                        }
-                                    }}
-                                    autoPlay
-                                    playsInline
-                                    muted
-                                    className={`w-full h-full object-cover ${isVideoOff ? 'hidden' : ''}`}
-                                />
-                                {isVideoOff && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
-                                        <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center">
-                                            <span className="text-gray-400 text-xs">Off</span>
+                                const mainStream = isLocalMain ? localStream : remoteStream;
+                                const mainKey = isLocalMain ? 'local-main' : `remote-${remoteUserId}`;
+                                const mainIsLocal = isLocalMain;
+
+                                return (
+                                    <div key={mainKey} className="absolute inset-0 z-0">
+                                        <video
+                                            ref={(el) => {
+                                                if (el) {
+                                                    if (mainStream && el.srcObject !== mainStream) {
+                                                        el.srcObject = mainStream;
+                                                        el.play().catch(err => console.error('Main video autoplay prevented:', err));
+                                                    }
+                                                    if (mainIsLocal) localVideoRef.current = el;
+                                                    else if (remoteUserId) remoteVideoRefs.current.set(remoteUserId, el);
+                                                }
+                                            }}
+                                            autoPlay
+                                            playsInline
+                                            muted={mainIsLocal} // Mute if showing local stream
+                                            className={`w-full h-full object-cover ${mainIsLocal && isVideoOff ? 'hidden' : ''}`}
+                                        />
+                                        {/* Fallback for blocked camera (Local Main) */}
+                                        {mainIsLocal && isVideoOff && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+                                                <div className="w-24 h-24 rounded-full bg-purple-600 flex items-center justify-center text-white text-3xl font-bold">
+                                                    You
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Name Overlay */}
+                                        <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full z-10 pointer-events-none">
+                                            <span className="text-white font-medium text-lg drop-shadow-md">
+                                                {mainIsLocal
+                                                    ? 'You'
+                                                    : (activeCall.participants.find(p => p.userId === remoteUserId)?.username || 'User')}
+                                            </span>
                                         </div>
                                     </div>
-                                )}
-                            </div>
+                                );
+                            })()}
+
+                            {/* Floating Video (Draggable & Swappable) */}
+                            {(() => {
+                                // Determine Small Stream
+                                const remoteEntry = Array.from(remoteStreams.entries())[0];
+                                const remoteUserId = remoteEntry?.[0];
+                                const remoteStream = remoteEntry?.[1];
+
+                                const smallStream = isLocalMain ? remoteStream : localStream;
+                                const smallKey = isLocalMain ? `remote-small-${remoteUserId}` : 'local-small';
+                                const smallIsLocal = !isLocalMain; // If local is main, small is NOT local.
+
+                                return (
+                                    <motion.div
+                                        drag
+                                        dragConstraints={constraintsRef}
+                                        dragElastic={0.1}
+                                        dragMomentum={false}
+                                        onClick={() => setIsLocalMain(!isLocalMain)}
+                                        className="absolute bottom-24 right-4 w-32 h-44 md:w-48 md:h-64 bg-gray-900/90 backdrop-blur-sm rounded-xl overflow-hidden shadow-2xl border border-white/20 z-20 cursor-grab active:cursor-grabbing hover:scale-105 transition-transform"
+                                        style={{ touchAction: 'none' }}
+                                    >
+                                        <video
+                                            key={smallKey}
+                                            ref={(el) => {
+                                                if (el) {
+                                                    if (smallStream && el.srcObject !== smallStream) {
+                                                        el.srcObject = smallStream;
+                                                        el.play().catch(console.error);
+                                                    }
+                                                    if (smallIsLocal) localVideoRef.current = el;
+                                                    else if (remoteUserId) remoteVideoRefs.current.set(remoteUserId, el);
+                                                }
+                                            }}
+                                            autoPlay
+                                            playsInline
+                                            muted={smallIsLocal} // Mute if showing local stream
+                                            className={`w-full h-full object-cover ${smallIsLocal && isVideoOff ? 'hidden' : ''}`}
+                                        />
+
+                                        {/* Fallback for blocked camera (Local Small) */}
+                                        {smallIsLocal && isVideoOff && (
+                                            <div className="absolute inset-0 flex items-center justify-center bg-gray-800">
+                                                <div className="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center">
+                                                    <span className="text-gray-400 text-xs">Off</span>
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Name Label for Small View */}
+                                        <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-xs text-white opacity-0 hover:opacity-100 transition-opacity pointer-events-none">
+                                            {smallIsLocal ? 'You' : (activeCall.participants.find(p => p.userId === remoteUserId)?.username || 'User')}
+                                        </div>
+                                    </motion.div>
+                                );
+                            })()}
                         </div>
                     ) : (
                         // Group Call: Grid Layout
@@ -322,6 +383,62 @@ export const OngoingCallUI: React.FC = () => {
                                     <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
                                 </svg>
                             )}
+                        </button>
+                    )}
+
+                    {/* Screen Share Button (Hidden on Mobile usually, but we keep it) */}
+                    {isVideoCall && (
+                        <button
+                            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg ${isScreenSharing
+                                ? 'bg-green-500 hover:bg-green-600'
+                                : 'bg-gray-700 hover:bg-gray-600'
+                                }`}
+                            onClick={toggleScreenShare}
+                            aria-label={isScreenSharing ? 'Stop screen share' : 'Share screen'}
+                        >
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="white"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M13 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-3" />
+                                <path d="M8 21h8" />
+                                <path d="M12 17v4" />
+                                <path d="M17 8l5-5" />
+                                <path d="M17 3h5v5" />
+                            </svg>
+                        </button>
+                    )}
+
+                    {/* Switch Camera Button (Mobile) */}
+                    {isVideoCall && !isScreenSharing && (
+                        <button
+                            className={`w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-lg bg-gray-700 hover:bg-gray-600`}
+                            onClick={switchCamera}
+                            aria-label="Switch Camera"
+                        >
+                            <svg
+                                width="24"
+                                height="24"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="white"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M20 10c0 6-8 6-8 10s-8-4-8-10 6-10 8-10 8 4 8 10z" opacity="0.5" />
+                                <path d="M4 11V9a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H6l-2 2z" opacity="0" />
+                                <path d="M22 17a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2h2l2-3h8l2 3h2a2 2 0 0 1 2 2v8z" />
+                                <circle cx="12" cy="13" r="4" />
+                                <path d="M21.5 5.5l-2-2" />
+                                <path d="M19.5 5.5l2-2" />
+                            </svg>
                         </button>
                     )}
 

@@ -25,6 +25,7 @@ interface ChatAreaProps {
     onRefresh: () => void;
     onBack?: () => void;
     isLoading?: boolean;
+    onlineUsers?: { [userId: string]: { isOnline: boolean, lastSeen: string | null } };
 }
 
 export const ChatArea: React.FC<ChatAreaProps> = ({
@@ -37,7 +38,8 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
     currentUser,
     onRefresh,
     onBack,
-    isLoading = false
+    isLoading = false,
+    onlineUsers = {}
 }) => {
     const [text, setText] = useState('');
     const [showAdminMenu, setShowAdminMenu] = useState(false);
@@ -267,6 +269,26 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
         ? conversation.users.find((u: any) => u.userId !== currentUser.id)?.user
         : null;
 
+    // Determine status from passed onlineUsers or fallback
+    const otherUserId = otherUser?.id || null;
+    const presence = otherUserId ? onlineUsers[otherUserId] : null;
+    const isOnline = presence?.isOnline || false;
+
+    // Format last seen timestamp
+    let statusText = 'Offline';
+    if (isOnline) {
+        statusText = 'Online';
+    } else if (presence?.lastSeen) {
+        const lastSeenDate = new Date(presence.lastSeen);
+        const now = new Date();
+        const diff = now.getTime() - lastSeenDate.getTime();
+
+        if (diff < 60000) statusText = 'Last seen just now';
+        else if (diff < 3600000) statusText = `Last seen ${Math.floor(diff / 60000)}m ago`;
+        else if (diff < 86400000) statusText = `Last seen ${Math.floor(diff / 3600000)}h ago`;
+        else statusText = `Last seen ${lastSeenDate.toLocaleDateString()}`;
+    }
+
     const title = conversation.isGroup ? conversation.name : otherUser?.username;
 
     return (
@@ -313,7 +335,9 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                                     size="lg"
                                     className="ring-2 ring-white/20 shadow-lg rounded-2xl"
                                 />
-                                <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0f172a] shadow-sm shadow-green-500/50" />
+                                {isOnline && (
+                                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-[#0f172a] shadow-sm shadow-green-500/50" />
+                                )}
                             </>
                         )}
                     </div>
@@ -325,9 +349,9 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                                 {conversation.users.length} members
                             </span>
                         ) : (
-                            <span className="text-[11px] md:text-xs text-green-400 font-medium flex items-center gap-1.5">
-                                <div className="w-2 h-2 bg-green-500 rounded-full shadow-sm shadow-green-500/50" />
-                                Online
+                            <span className={`text-[11px] md:text-xs font-medium flex items-center gap-1.5 ${isOnline ? 'text-green-400' : 'text-slate-400'}`}>
+                                {isOnline && <div className="w-2 h-2 bg-green-500 rounded-full shadow-sm shadow-green-500/50" />}
+                                {statusText}
                             </span>
                         )}
                     </div>
