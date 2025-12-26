@@ -12,6 +12,7 @@ export interface ActiveCall {
     initiator?: CallParticipant;
     participants: CallParticipant[];
     status: 'calling' | 'ringing' | 'active' | 'ended';
+    conversationId?: string;
 }
 
 export interface IncomingCall {

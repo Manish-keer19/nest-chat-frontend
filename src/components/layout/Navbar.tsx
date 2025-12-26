@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/Button';
-import { Layers, MessageCircle, LogOut, UserPlus, Menu, X, Maximize, Minimize } from 'lucide-react';
+import { Layers, MessageCircle, LogOut, UserPlus, Menu, X, Maximize, Minimize, Video } from 'lucide-react';
 
 interface NavbarProps {
     user: any;
@@ -70,6 +70,13 @@ export default function Navbar({ user, isLoggedIn, onLogout, currentPage }: Navb
                                 <Button variant="ghost" className="hidden md:flex text-slate-300 hover:text-white hover:bg-white/5 gap-2 rounded-xl transition-all">
                                     <Layers className="w-4 h-4" />
                                     <span>Feed</span>
+                                </Button>
+                            </Link>
+
+                            <Link to="/random-chat">
+                                <Button variant="ghost" className="hidden md:flex text-slate-300 hover:text-white hover:bg-white/5 gap-2 rounded-xl transition-all">
+                                    <Video className="w-4 h-4" />
+                                    <span>Random</span>
                                 </Button>
                             </Link>
 
@@ -192,6 +199,12 @@ export default function Navbar({ user, isLoggedIn, onLogout, currentPage }: Navb
                                         </div>
 
                                         <div className="grid grid-cols-2 gap-3">
+                                            <Link to="/random-chat" onClick={() => setIsMobileMenuOpen(false)} className="col-span-2">
+                                                <Button variant="ghost" className="w-full justify-start text-purple-400 hover:text-purple-300 hover:bg-white/5 gap-2 rounded-xl h-12 border border-purple-500/20 bg-purple-500/10">
+                                                    <Video className="w-4 h-4" />
+                                                    Random Chat
+                                                </Button>
+                                            </Link>
                                             <Link to="/posts" onClick={() => setIsMobileMenuOpen(false)}>
                                                 <Button variant="ghost" className="w-full justify-start text-slate-300 hover:text-white hover:bg-white/5 gap-2 rounded-xl h-12">
                                                     <Layers className="w-4 h-4" />

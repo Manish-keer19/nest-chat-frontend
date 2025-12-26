@@ -11,8 +11,11 @@ import PostsPage from './pages/PostsPage';
 import AuthCallback from './pages/AuthCallback';
 import ProfilePage from './pages/ProfilePage';
 import { CallProvider } from './contexts/CallContext';
+import { RandomCallProvider } from './contexts/RandomCallContext';
 import { IncomingCallModal } from './components/IncomingCallModal';
 import { OngoingCallUI } from './components/OngoingCallUI';
+import { ActiveCallIndicator } from './components/ActiveCallIndicator';
+import RandomVideoPage from './pages/RandomVideoPage';
 
 function App() {
   const [user, setUser] = useState<any>(null);
@@ -98,6 +101,14 @@ function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/random-chat"
+          element={
+            <ProtectedRoute>
+              <RandomVideoPage />
+            </ProtectedRoute>
+          }
+        />
 
         {/* 404 Not Found - catch all routes */}
         <Route path="*" element={<NotFound />} />
@@ -108,6 +119,7 @@ function App() {
         <>
           <IncomingCallModal />
           <OngoingCallUI />
+          <ActiveCallIndicator />
         </>
       )}
     </>
@@ -117,11 +129,13 @@ function App() {
     return <div className="h-screen w-screen bg-[#050508]" />;
   }
 
-  // Wrap with CallProvider only if user is logged in
+  // Wrap with CallProvider and RandomCallProvider only if user is logged in
   if (user) {
     return (
       <CallProvider userId={user.id} username={user.username}>
-        {content}
+        <RandomCallProvider>
+          {content}
+        </RandomCallProvider>
       </CallProvider>
     );
   }
