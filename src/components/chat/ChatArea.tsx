@@ -60,7 +60,41 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Call functionality
-    const { initiateCall } = useCall();
+    const { initiateCall, joinGroupCall, activeCall } = useCall();
+    const [activeGroupCall, setActiveGroupCall] = useState<any>(null);
+
+    // Check for active call in this conversation
+    useEffect(() => {
+        if (conversation?.isGroup) {
+            const checkActiveCall = async () => {
+                try {
+                    const res = await api.get(`/calls/conversation/${conversation.id}/active`);
+                    setActiveGroupCall(res.data);
+                } catch (error) {
+                    console.error("Failed to fetch active call", error);
+                }
+            };
+            checkActiveCall();
+
+            // Poll every 10 seconds for updates? Or rely on socket events?
+            // For now, simple polling or refresh on mount is okay.
+            const interval = setInterval(checkActiveCall, 10000);
+            return () => clearInterval(interval);
+        } else {
+            setActiveGroupCall(null);
+        }
+    }, [conversation?.id, conversation?.isGroup]);
+
+    const handleJoinCall = async () => {
+        if (activeGroupCall) {
+            try {
+                await joinGroupCall(activeGroupCall.id, activeGroupCall.callType);
+            } catch (error) {
+                console.error("Failed to join call", error);
+                alert("Failed to join call");
+            }
+        }
+    };
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -458,6 +492,38 @@ export const ChatArea: React.FC<ChatAreaProps> = ({
                     </div>
                 )}
             </div>
+
+            {/* Active Group Call Banner */}
+            {activeGroupCall && (!activeCall || activeCall.callId !== activeGroupCall.id) && (
+                <div className="bg-gradient-to-r from-green-600/90 to-emerald-600/90 backdrop-blur-md px-4 py-2 flex items-center justify-between z-20 shadow-lg border-b border-white/10">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white/20 rounded-full animate-pulse">
+                            {activeGroupCall.callType.includes('VIDEO') ? (
+                                <Video className="w-5 h-5 text-white" />
+                            ) : (
+                                <Phone className="w-5 h-5 text-white" />
+                            )}
+                        </div>
+                        <div>
+                            <p className="text-white font-bold text-sm">Ongoing Group Call</p>
+                            <p className="text-green-100 text-xs flex items-center gap-1">
+                                {activeGroupCall.participants.length} participants
+                                <span className="flex -space-x-1 ml-1">
+                                    {activeGroupCall.participants.slice(0, 3).map((p: any) => (
+                                        <Avatar key={p.user.id} src={p.user.avatarUrl} size="xs" className="border border-green-600" />
+                                    ))}
+                                </span>
+                            </p>
+                        </div>
+                    </div>
+                    <button
+                        onClick={handleJoinCall}
+                        className="bg-white text-green-700 px-4 py-1.5 rounded-full font-bold text-sm hover:bg-green-50 shadow-md transition-all active:scale-95"
+                    >
+                        Join
+                    </button>
+                </div>
+            )}
 
             {/* Messages - Responsive padding and spacing */}
             <div className="flex-1 overflow-y-auto px-3 md:px-4 lg:px-6 py-3 md:py-4 z-10 scrollbar-thin scrollbar-thumb-gray-700 overscroll-contain">

@@ -23,6 +23,7 @@ interface CallContextType {
     toggleVideo: () => void;
     toggleScreenShare: () => void;
     switchCamera: () => Promise<void>;
+    joinGroupCall: (callId: string, callType: 'AUDIO_GROUP' | 'VIDEO_GROUP') => Promise<void>;
 }
 
 const CallContext = createContext<CallContextType | undefined>(undefined);
@@ -54,6 +55,7 @@ export const CallProvider: React.FC<CallProviderProps> = ({ children, userId, us
                 toggleScreenShare: webRTC.toggleScreenShare,
                 isScreenSharing: webRTC.isScreenSharing,
                 switchCamera: webRTC.switchCamera,
+                joinGroupCall: webRTC.joinGroupCall,
             }}
         >
             {children}

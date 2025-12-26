@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCall } from '../contexts/CallContext';
 import { Mic, MicOff, Video, VideoOff, MonitorUp, PhoneOff, ZoomIn, ZoomOut, RefreshCw } from 'lucide-react';
@@ -25,6 +26,7 @@ export const OngoingCallUI: React.FC = () => {
     const [showControls, setShowControls] = useState(true);
     const controlsTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
     const constraintsRef = useRef<HTMLDivElement>(null);
+    const [isMinimized, setIsMinimized] = useState(false);
 
     // Auto-hide controls
     useEffect(() => {
@@ -70,11 +72,66 @@ export const OngoingCallUI: React.FC = () => {
 
     if (!activeCall) return null;
 
+    const location = useLocation();
+    const isRandomPage = location.pathname === '/random-chat';
+    const conversationIdMatch = location.pathname.match(/\/chat\/([^\/]+)/);
+    const currentConversationId = conversationIdMatch ? conversationIdMatch[1] : null;
+
+    // Check if we are on the correct page for this call
+    // If it's a random call (no conversationId), we must be on /random-chat
+    // If it's a regular call (has conversationId), we must be on /chat/:id
+    const isOnCallPage = activeCall.conversationId
+        ? currentConversationId === activeCall.conversationId
+        : isRandomPage; // Fallback logic if conversationId missing (likely random call)
+
+    // If not on the call page, hide this UI (ActiveCallIndicator will show instead)
+    if (!isOnCallPage) return null;
+
     const isVideoCall = activeCall.callType.includes('VIDEO');
     const remoteStreamCount = remoteStreams.size;
 
+    if (isMinimized) {
+        return (
+            <motion.div
+                drag
+                dragMomentum={false}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="fixed bottom-24 right-4 z-[9999] w-32 h-48 md:w-48 md:h-72 bg-black rounded-2xl shadow-2xl overflow-hidden border-2 border-white/20 cursor-move pointer-events-auto"
+            >
+                {/* Minimized Content */}
+                <div className="w-full h-full relative group">
+                    {/* Show local or remote */}
+                    <video
+                        ref={localVideoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setIsMinimized(false); }}
+                            className="p-2 bg-blue-500 rounded-full text-white hover:bg-blue-600 transition-colors"
+                        >
+                            <ZoomIn size={20} />
+                        </button>
+                    </div>
+                    <div className="absolute top-2 right-2 p-1 bg-green-500 rounded-full animate-pulse" />
+                </div>
+            </motion.div>
+        );
+    }
+
     return (
         <div className="fixed inset-0 bg-[#000] z-[9999] overflow-hidden flex flex-col font-sans">
+            {/* Minimize Button */}
+            <button
+                onClick={() => setIsMinimized(true)}
+                className="absolute top-4 right-4 z-[10000] p-2 bg-white/10 hover:bg-white/20 rounded-xl text-white backdrop-blur-md transition-all"
+            >
+                <ZoomOut size={24} />
+            </button>
             {/* Main Content Area */}
             <div className="relative flex-1 w-full h-full" ref={constraintsRef}>
                 {isVideoCall ? (

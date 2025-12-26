@@ -774,6 +774,56 @@ export const useWebRTC = (userId: string, username: string) => {
         setIsVideoOff(false);
     };
 
+    /**
+     * Join an existing group call
+     */
+    const joinGroupCall = async (callId: string, callType: 'AUDIO_GROUP' | 'VIDEO_GROUP') => {
+        if (!socket) throw new Error('Socket not connected');
+
+        try {
+            // Get user media
+            const isVideo = callType.includes('VIDEO');
+            const stream = await getUserMedia(isVideo);
+
+            return new Promise<void>((resolve, reject) => {
+                socket.emit('group-call:join', { callId }, (response: any) => {
+                    if (response.error) {
+                        stream.getTracks().forEach(t => t.stop());
+                        reject(new Error(response.error));
+                        return;
+                    }
+
+                    const call = response.call;
+
+                    setActiveCall({
+                        callId: call.id,
+                        callType: call.callType,
+                        participants: call.participants.map((p: any) => ({
+                            userId: p.user.id,
+                            username: p.user.username,
+                            avatarUrl: p.user.avatarUrl
+                        })),
+                        status: 'active',
+                        conversationId: call.conversationId
+                    });
+
+                    // Initiate connections to all existing participants (who have JOINED)
+                    // The backend response for 'group-call:join' returns 'call' which has 'participants'
+                    call.participants.forEach((p: any) => {
+                        if (p.user.id !== userId && p.status === 'JOINED') {
+                            createPeerConnection(p.user.id, true, stream, call.id);
+                        }
+                    });
+
+                    resolve();
+                });
+            });
+        } catch (error) {
+            console.error('Error joining group call:', error);
+            throw error;
+        }
+    };
+
     return {
         socket,
         localStream,
@@ -791,5 +841,6 @@ export const useWebRTC = (userId: string, username: string) => {
         toggleScreenShare,
         isScreenSharing,
         switchCamera,
+        joinGroupCall,
     };
 };
