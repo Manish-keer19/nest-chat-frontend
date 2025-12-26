@@ -564,7 +564,12 @@ export const useWebRTC = (userId: string, username: string) => {
      * End active call
      */
     const endCall = () => {
+        console.log('[WebRTC] Ending call...', { hasSocket: !!socket, hasActiveCall: !!activeCall });
+
         if (!socket || !activeCall) {
+            console.warn('[WebRTC] Cannot end call - missing socket or activeCall');
+            // Still cleanup local resources even if socket is missing
+            cleanupCall();
             return;
         }
 
@@ -573,7 +578,9 @@ export const useWebRTC = (userId: string, username: string) => {
         } else {
             socket.emit('call:end', { callId: activeCall.callId });
         }
+
         cleanupCall();
+        console.log('[WebRTC] Call ended and cleaned up');
     };
 
     /**
@@ -755,14 +762,26 @@ export const useWebRTC = (userId: string, username: string) => {
      * Cleanup call resources
      */
     const cleanupCall = () => {
+        console.log('[WebRTC] Starting cleanup...', {
+            hasLocalStream: !!localStream,
+            peerConnectionCount: peerConnections.current.size,
+            remoteStreamCount: remoteStreams.size
+        });
+
         // Stop local stream
         if (localStream) {
-            localStream.getTracks().forEach((track) => track.stop());
+            localStream.getTracks().forEach((track) => {
+                console.log(`[WebRTC] Stopping ${track.kind} track`);
+                track.stop();
+            });
             setLocalStream(null);
         }
 
         // Close all peer connections
-        peerConnections.current.forEach((pc) => pc.close());
+        peerConnections.current.forEach((pc, userId) => {
+            console.log(`[WebRTC] Closing peer connection for user: ${userId}`);
+            pc.close();
+        });
         peerConnections.current.clear();
 
         // Clear remote streams
@@ -772,6 +791,9 @@ export const useWebRTC = (userId: string, username: string) => {
         setActiveCall(null);
         setIsMuted(false);
         setIsVideoOff(false);
+        setIsScreenSharing(false);
+
+        console.log('[WebRTC] Cleanup complete');
     };
 
     /**

@@ -38,9 +38,23 @@ function App() {
   }, []);
 
   const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+    // Show loading state while checking authentication
+    if (isLoading) {
+      return (
+        <div className="h-screen w-screen bg-[#050508] flex items-center justify-center">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-white/60 text-sm">Loading...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // Only redirect to login if auth check is complete and user is not logged in
     if (!user) {
       return <Navigate to="/login" replace />;
     }
+
     return children;
   };
 

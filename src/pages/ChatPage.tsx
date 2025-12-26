@@ -23,16 +23,14 @@ export default function ChatPage() {
     const [typingUsers, setTypingUsers] = useState<{ [conversationId: string]: any[] }>({});
     const [onlineUsers, setOnlineUsers] = useState<{ [userId: string]: { isOnline: boolean, lastSeen: string | null } }>({});
 
-    // Initialize User
+    // Initialize User from localStorage
     useEffect(() => {
         const userStr = localStorage.getItem('user');
-        if (!userStr) {
-            navigate('/login');
-            return;
+        if (userStr) {
+            const userData = JSON.parse(userStr);
+            setUser(userData);
         }
-        const userData = JSON.parse(userStr);
-        setUser(userData);
-    }, [navigate]);
+    }, []);
 
     // Connect Socket & Fetch Conversations
     useEffect(() => {
