@@ -1,11 +1,16 @@
 // Sound notification utility for chat messages
 import messageAudio from "../assets/message.mp3"
 import notificationAudio from "../assets/notificatiion.wav"
+import meraYesuRingtone from "../assets/Mera_yesu.mp3"
+import toyPhoneRingtone from "../assets/toy_phone.mp3"
+
 class SoundManager {
     private enabled: boolean = true;
     private sendAudio: HTMLAudioElement | null = null;
     private receiveAudio: HTMLAudioElement | null = null;
     private ringtoneInterval: number | null = null;
+    private currentRingtone: HTMLAudioElement | null = null;
+    private ringtoneAudios: HTMLAudioElement[] = [];
 
     constructor() {
         // Initialize sound enabled state from localStorage
@@ -32,6 +37,19 @@ class SoundManager {
             this.receiveAudio.volume = 0.6;
             this.receiveAudio.preload = 'auto';
 
+            // Initialize ringtone audio files
+            const ringtone1 = new Audio(meraYesuRingtone);
+            ringtone1.volume = 0.7;
+            ringtone1.preload = 'auto';
+            ringtone1.loop = false; // We'll handle looping manually
+
+            const ringtone2 = new Audio(toyPhoneRingtone);
+            ringtone2.volume = 0.7;
+            ringtone2.preload = 'auto';
+            ringtone2.loop = false; // We'll handle looping manually
+
+            this.ringtoneAudios = [ringtone1, ringtone2];
+
             // Handle errors - if files don't exist, we'll use fallback tones
             this.sendAudio.addEventListener('error', () => {
                 console.warn('message.mp3 not found, using fallback tone');
@@ -41,6 +59,13 @@ class SoundManager {
             this.receiveAudio.addEventListener('error', () => {
                 console.warn('notification.wav not found, using fallback tone');
                 this.receiveAudio = null;
+            });
+
+            // Handle ringtone errors
+            this.ringtoneAudios.forEach((audio, index) => {
+                audio.addEventListener('error', () => {
+                    console.warn(`Ringtone ${index + 1} not found`);
+                });
             });
         } catch (error) {
             console.error('Error initializing audio files:', error);
@@ -150,6 +175,7 @@ class SoundManager {
 
     /**
      * Start playing ringtone (loops until stopped)
+     * Randomly selects between available ringtones
      */
     playRingtone() {
         if (!this.enabled) return;
@@ -157,19 +183,52 @@ class SoundManager {
         // Stop any existing ringtone
         this.stopRingtone();
 
-        // Play immediately
-        this.playRingtonePattern();
+        // Randomly select a ringtone
+        if (this.ringtoneAudios.length > 0) {
+            const randomIndex = Math.floor(Math.random() * this.ringtoneAudios.length);
+            this.currentRingtone = this.ringtoneAudios[randomIndex];
 
-        // Then repeat every 2 seconds
-        this.ringtoneInterval = window.setInterval(() => {
+            // Play the selected ringtone
+            this.currentRingtone.currentTime = 0;
+            this.currentRingtone.play().catch(err => {
+                console.warn('Failed to play ringtone audio, using fallback:', err);
+                this.playRingtonePattern();
+                // Fallback to pattern-based ringtone
+                this.ringtoneInterval = window.setInterval(() => {
+                    this.playRingtonePattern();
+                }, 2000);
+            });
+
+            // When the ringtone ends, replay it (loop)
+            this.currentRingtone.addEventListener('ended', () => {
+                if (this.currentRingtone) {
+                    this.currentRingtone.currentTime = 0;
+                    this.currentRingtone.play().catch(err => {
+                        console.error('Error replaying ringtone:', err);
+                    });
+                }
+            });
+        } else {
+            // Fallback to pattern-based ringtone if no audio files available
             this.playRingtonePattern();
-        }, 2000);
+            this.ringtoneInterval = window.setInterval(() => {
+                this.playRingtonePattern();
+            }, 2000);
+        }
     }
 
     /**
      * Stop the ringtone
      */
     stopRingtone() {
+        // Stop audio-based ringtone
+        if (this.currentRingtone) {
+            this.currentRingtone.pause();
+            this.currentRingtone.currentTime = 0;
+            this.currentRingtone = null;
+        }
+
+        // Stop pattern-based ringtone interval
         if (this.ringtoneInterval !== null) {
             clearInterval(this.ringtoneInterval);
             this.ringtoneInterval = null;
