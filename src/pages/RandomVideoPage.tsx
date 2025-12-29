@@ -18,10 +18,40 @@ import { toast, Toaster } from 'sonner';
 import { useConnectionQuality } from '../hooks/useConnectionQuality';
 import { ConnectionQualityIndicator } from '../components/ConnectionQualityIndicator';
 
-const RTC_CONFIG = {
+// Enhanced RTC Configuration with TURN servers for international connectivity
+// TURN servers are CRITICAL for connections between different countries/networks
+const RTC_CONFIG: RTCConfiguration = {
     iceServers: [
-        { urls: 'stun:stun.l.google.com:19302' },
+        // STUN servers - for discovering public IP addresses
+        {
+            urls: [
+                'stun:stun.l.google.com:19302',
+                'stun:stun1.l.google.com:19302',
+                'stun:stun2.l.google.com:19302',
+            ]
+        },
+        // TURN servers - for relaying media when direct connection fails
+        // These are essential for international calls and restrictive networks
+        {
+            urls: 'turn:openrelay.metered.ca:80',
+            username: 'openrelayproject',
+            credential: 'openrelayproject',
+        },
+        {
+            urls: 'turn:openrelay.metered.ca:443',
+            username: 'openrelayproject',
+            credential: 'openrelayproject',
+        },
+        {
+            urls: 'turn:openrelay.metered.ca:443?transport=tcp',
+            username: 'openrelayproject',
+            credential: 'openrelayproject',
+        },
     ],
+    // Optimize ICE gathering and connection establishment
+    iceCandidatePoolSize: 10, // Pre-gather ICE candidates for faster connection
+    bundlePolicy: 'max-bundle', // Bundle all media on single transport
+    rtcpMuxPolicy: 'require', // Multiplex RTP and RTCP on same port
 };
 
 const RandomVideoPage = () => {
@@ -269,7 +299,40 @@ const RandomVideoPage = () => {
 
             // Handle ICE connection state
             pc.oniceconnectionstatechange = () => {
-                console.log('ICE connection state:', pc.iceConnectionState);
+                console.log('🔌 ICE connection state:', pc.iceConnectionState);
+
+                // Log detailed connection info for debugging
+                if (pc.iceConnectionState === 'connected' || pc.iceConnectionState === 'completed') {
+                    console.log('✅ WebRTC connection established successfully!');
+
+                    // Log which ICE candidate pair was selected (useful for debugging TURN usage)
+                    pc.getStats(null).then(stats => {
+                        stats.forEach(report => {
+                            if (report.type === 'candidate-pair' && report.state === 'succeeded') {
+                                console.log('🎯 Active ICE candidate pair:', {
+                                    local: report.localCandidateId,
+                                    remote: report.remoteCandidateId,
+                                    nominated: report.nominated,
+                                });
+                            }
+                            if (report.type === 'local-candidate' && report.candidateType === 'relay') {
+                                console.log('🔄 Using TURN relay server:', report.address);
+                            }
+                        });
+                    });
+                } else if (pc.iceConnectionState === 'failed') {
+                    console.error('❌ ICE connection failed - may need better TURN servers');
+                } else if (pc.iceConnectionState === 'disconnected') {
+                    console.warn('⚠️ ICE connection disconnected - attempting to reconnect');
+                }
+            };
+
+            // Handle ICE gathering state (useful for debugging)
+            pc.onicegatheringstatechange = () => {
+                console.log('📡 ICE gathering state:', pc.iceGatheringState);
+                if (pc.iceGatheringState === 'complete') {
+                    console.log('✅ ICE candidate gathering completed');
+                }
             };
 
             if (role === 'initiator') {
