@@ -80,7 +80,7 @@ export default function Home() {
                         transition={{ duration: 0.5, delay: 0.3 }}
                         className="flex flex-col sm:flex-row items-center justify-center gap-4"
                     >
-                        <Link to={isLoggedIn ? "/random-video" : "/register"}>
+                        <Link to={isLoggedIn ? "/random-chat" : "/register"}>
                             <Button className="px-8 py-4  text-black hover:bg-slate-200 rounded-full text-lg font-semibold transition-all hover:scale-105 active:scale-95 flex items-center gap-2">
                                 <Video className="w-5 h-5" />
                                 Start Random Chat

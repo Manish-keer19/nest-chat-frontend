@@ -36,8 +36,8 @@ export default function ChatPage() {
     useEffect(() => {
         if (!user) return;
 
-        const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
-        const newSocket = io(socketUrl, {
+        // Connect to backend via Vite proxy (uses default /socket.io path)
+        const newSocket = io("/", {
             autoConnect: true,
             auth: {
                 token: localStorage.getItem('token')

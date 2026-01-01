@@ -88,8 +88,8 @@ const RandomVideoPage = () => {
 
     // Initialize Socket
     useEffect(() => {
-        const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
-        const newSocket = io(`${API_URL}/random-chat`, {
+        
+        const newSocket = io(`/random-chat`, {
             transports: ['websocket'],
             auth: {
                 token: localStorage.getItem('token'),

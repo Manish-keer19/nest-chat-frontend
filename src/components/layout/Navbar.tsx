@@ -81,7 +81,7 @@ export default function Navbar({ user, isLoggedIn, onLogout, currentPage }: Navb
                             </Link>
 
                             {currentPage !== 'chat' && (
-                                <Link to="/conversations">
+                                <Link to="/chat">
                                     <Button className="hidden md:flex bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/30 backdrop-blur-md gap-2 rounded-xl transition-all shadow-[0_0_15px_rgba(59,130,246,0.15)] hover:shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:scale-105">
                                         <MessageCircle className="w-4 h-4" />
                                         <span>Chat</span>
@@ -175,7 +175,7 @@ export default function Navbar({ user, isLoggedIn, onLogout, currentPage }: Navb
                             animate={{ opacity: 1, height: 'auto' }}
                             exit={{ opacity: 0, height: 0 }}
                             transition={{ duration: 0.2 }}
-                            className="md:hidden bg-[#0f172a] border-b border-white/10 overflow-hidden"
+                            className="md:hidden bg-[#050508] border-b border-white/10 overflow-hidden"
                         >
                             <div className="p-4 space-y-4">
                                 {/* Mobile Fullscreen Toggle */}
@@ -211,7 +211,7 @@ export default function Navbar({ user, isLoggedIn, onLogout, currentPage }: Navb
                                                     Feed
                                                 </Button>
                                             </Link>
-                                            <Link to="/conversations" onClick={() => setIsMobileMenuOpen(false)}>
+                                            <Link to="/chat" onClick={() => setIsMobileMenuOpen(false)}>
                                                 <Button className="w-full justify-start bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 gap-2 rounded-xl h-12">
                                                     <MessageCircle className="w-4 h-4" />
                                                     Chat

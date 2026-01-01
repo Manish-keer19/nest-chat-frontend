@@ -28,8 +28,8 @@ export default function ConversationsPage() {
     useEffect(() => {
         if (!user) return;
 
-        const socketUrl = import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000';
-        const newSocket = io(socketUrl, {
+        
+        const newSocket = io("/", {
             autoConnect: true,
             auth: {
                 token: localStorage.getItem('token')
